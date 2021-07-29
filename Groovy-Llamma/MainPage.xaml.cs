@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xamarin.Forms;
+using Groovy_Llamma.Services;
+using Groovy_Llamma.ViewModels;
 
 namespace Groovy_Llamma
 {
@@ -13,6 +15,7 @@ namespace Groovy_Llamma
         public MainPage()
         {
             InitializeComponent();
+            BindingContext = new AudioPlayerViewModel(DependencyService.Get<AudioPlayerService>());
         }
     }
 }
