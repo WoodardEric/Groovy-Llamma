@@ -14,8 +14,6 @@ public class MusicPlayer {
 
     public MusicPlayer(Context context) {
         mediaPlayer = new ExoPlayer.Builder(context.getApplicationContext()).build();
-        ExtractedMediaSource
-        MediaItem item = MediaItem.fromUri(R.raw.music1);
     }
 
     public void play() {
