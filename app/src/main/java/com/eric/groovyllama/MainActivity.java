@@ -1,12 +1,14 @@
 package com.eric.groovyllama;
 
 import android.Manifest;
-import android.content.ContentResolver;
+import android.content.*;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.IBinder;
 import android.provider.MediaStore;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.ListView;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,14 +19,17 @@ import com.eric.groovyllama.adapter.SongAdapter;
 import com.eric.groovyllama.model.Song;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
+
+import com.eric.groovyllama.MusicPlayer.MusicBinder;
 
 public class MainActivity extends AppCompatActivity {
 
     private ArrayList<Song> songList;
     private ListView songView;
+    private MusicPlayer musicPlayer;
+    private Intent playIntent;
+    private boolean musicBound = false;
 
 
     @Override
@@ -49,6 +54,31 @@ public class MainActivity extends AppCompatActivity {
         songView.setAdapter(songAdt);
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (playIntent == null) {
+            playIntent = new Intent(this, MusicPlayer.class);
+            bindService(playIntent, musicConnection, Context.BIND_AUTO_CREATE);
+            startService(playIntent);
+        }
+    }
+
+    private ServiceConnection musicConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            MusicBinder binder = (MusicBinder) service;
+            musicPlayer = binder.getService();
+            musicPlayer.setList(songList);
+            musicBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            musicBound = false;
+        }
+    };
+
     public void getSongList() {
         ContentResolver musicResolver = getContentResolver();
         Uri musicUri = android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
@@ -68,5 +98,32 @@ public class MainActivity extends AppCompatActivity {
                 songList.add(new Song(id, title, artist, album));
             } while (musicCursor.moveToNext());
         }
+    }
+
+    public void songPicked(View view){
+        int songIndex = Integer.parseInt(view.getTag().toString());
+        musicPlayer.setSong(songIndex);
+        musicPlayer.play();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_shuffle:
+                break;
+            case R.id.action_stop:
+                stopService(playIntent);
+                musicPlayer = null;
+                System.exit(0);
+                break;
+        }
+        return  super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onDestroy() {
+        stopService(playIntent);
+        musicPlayer = null;
+        super.onDestroy();
     }
 }
